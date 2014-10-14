@@ -2,10 +2,13 @@ Array.prototype.has = function(p) {
     return this.filter(p).length != 0;
 }
 
+
 var TWITTER_AVAILABLE_TRENDS = '/twitter_api/available_trends';
 var TWITTER_CLOSEST_TRENDS = '/twitter_api/closest_trends';
 var TWITTER_SEARCH = '/twitter_api/search';
 var TWITTER_TRENDS = '/twitter_api/trends';
+var MAX_ZOOM = 16;
+var MIN_ZOOM = 3;
 
 var CreateEventGroup = function() {
     var __eventList = [];
@@ -23,7 +26,7 @@ var CreateEventGroup = function() {
     };
 };
 
-var CreateTrendGroup = function() {
+var CreateTrendGroup = function(map) {
     var __trendingLocs = [];
     return {
         getTrends: function() {
@@ -126,7 +129,7 @@ var fetchTweetByTopic = function(topic, callback) {
 
 
 // todo: make priority queue
-var tweetTrendFetchingQueue = CreateRequestQueue(5*60);
+var tweetTrendFetchingQueue = CreateRequestQueue(60);
 var fetchTrends = function(woeid, callback) {
     tweetTrendFetchingQueue.enqueue({
         url: TWITTER_TRENDS+'?id='+woeid,
@@ -266,7 +269,7 @@ var findTrendingLoc = function(trends, tweetGroup) {
 
 window.fbAsyncInit = function() {
     FB.init({
-      appId      : '470801286396139',
+      appId      : fbAppId,
       xfbml      : true,
       version    : 'v2.1'
     });
@@ -288,9 +291,59 @@ window.fbAsyncInit = function() {
 }(document, 'script', 'facebook-jssdk'));
 
 
+var mapRegion = function(trendingLoc) {
+    var bound1 = trendingLoc.location.boundary.northEast;
+    var bound2 = trendingLoc.location.boundary.southWest;
+    var rectangle    = new google.maps.Rectangle({
+        strokeColor: '#FF0000',
+        strokeOpacity: 0,
+        strokeWeight: 2,
+        fillColor: '#FF0000',
+        fillOpacity: 0.3,
+        map: map,
+        bounds: new google.maps.LatLngBounds(
+          new google.maps.LatLng(bound1.latitude, bound2.longitude),
+          new google.maps.LatLng(bound2.latitude, bound1.longitude))
+    });
+    return rectangle;
+};
+
+
+var setZoomLevel = function(zoomLevel) {
+    var interval = 500;
+    var zoomDelta = zoomLevel - map.getZoom();
+    if (Math.abs(zoomDelta) > 4) {
+        map.setZoom(map.getZoom() + zoomDelta/2);
+        setTimeout(function() {
+            map.setZoom(zoomLevel);
+        }, interval);
+    } else {
+        map.setZoom(zoomLevel);
+    }
+
+    
+}
+
+var getZoomLevel = function(bound1, bound2) {
+    var maxArea = 360*180;
+    var area = Math.abs((bound1.latitude - bound2.latitude)*
+                        (bound1.longitude - bound2.longitude))
+    var ratio = area/maxArea;
+    return zoomLevel = MAX_ZOOM - (MAX_ZOOM - MIN_ZOOM)*ratio;
+}
 
 
 
-
-
+var moveMap = function(locs) {
+    var bound1 = locs[0].location.boundary.northEast;
+    var bound2 = locs[0].location.boundary.southWest;
+    var zoomLevel = getZoomLevel(bound1, bound2);
+    var center = locs[0].location.center;
+    if (Math.abs(zoomLevel - MIN_ZOOM) > 1) {
+        map.panToBounds(new google.maps.LatLngBounds(
+                new google.maps.LatLng(bound1.latitude, bound2.longitude),
+                new google.maps.LatLng(bound2.latitude, bound1.longitude)
+            ));
+    }
+}
 

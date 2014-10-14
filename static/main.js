@@ -1,18 +1,10 @@
+var map;
+
 function setBounds() {
   var mh = $(window).height() - 48;
   $('#map-canvas').css('height', mh + 'px'); // 48px is the height of the header
   $('#info-canvas').css('height', (mh - 48) + 'px');
 }
-
-
-
-var app = angular.module('app', []);
-app.controller('controller', function($scope) {
-  var trendGroup = CreateTrendGroup();
-  var tweetGroup = CreateTweetGroup($scope);
-  findTrendingLoc(trendGroup, tweetGroup);
-});
-
 
 
 
@@ -38,15 +30,15 @@ $(document).ready(function() {
       scaleControl: true,
       mapTypeControl: false,
       streetViewControl: false,
-      zoom: 16,
-      maxZoom: 20,
-      minZoom: 4,
+      zoom: 8,
+      maxZoom: MAX_ZOOM,
+      minZoom: MIN_ZOOM,
       center: center,
       mapTypeId: google.maps.MapTypeId.HYBRID,
       styles: [{"featureType":"road","elementType":"geometry","stylers":[{"visibility":"off"}]},{"featureType":"poi","elementType":"geometry","stylers":[{"visibility":"off"}]},{"featureType":"landscape","elementType":"geometry","stylers":[{"color":"#fffffa"}]},{"featureType":"water","stylers":[{"lightness":50}]},{"featureType":"road","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"transit","stylers":[{"visibility":"off"}]},{"featureType":"administrative","elementType":"geometry","stylers":[{"lightness":40}]}]
   };
 
-  var map = new google.maps.Map(document.getElementById('map-canvas'), options);
+  map = new google.maps.Map(document.getElementById('map-canvas'), options);
   function createMarker(point) {
       var latlng = new google.maps.LatLng(point["lat"],point["lon"]);
       var content;
@@ -153,7 +145,6 @@ $(document).ready(function() {
   var first = true;
   google.maps.event.addListener(map, "idle", function() {
     if (first) {
-      console.log('fo');
       if ($(window).width()>740) {
         $('#info-canvas').toggle('slide', { direction: 'left' }, 100);
         first = false;
@@ -167,6 +158,32 @@ $(document).ready(function() {
     if (pano.getVisible()) $('#info-canvas').css('display', 'none');
     else $('#info-canvas').css('display', 'block');
   });
+});
+
+
+var app = angular.module('app', []);
+app.controller('controller', function($scope) {
+
+  var trendGroup = CreateTrendGroup(map);
+  var tweetGroup = CreateTweetGroup($scope);
+  findTrendingLoc(trendGroup, tweetGroup);
+  $scope.rects = []
+
+  $scope.showRegion = function(tweet) {
+    var trendingLocIds = tweetGroup.getTweetTrendingLocs(tweet);
+    var trendingLocs = trendingLocIds.map(trendGroup.getLoc);
+    $scope.rects = trendingLocs.map(mapRegion);
+    moveMap(trendingLocs);
+  }
+
+  $scope.clearRects = function() {
+    $scope.rects.forEach(function(rect) {
+        rect.setMap(null);
+    });
+    $scope.rects = [];
+  }
+  
+
 });
 
 

@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect, make_response, url_
 import redis
 import simplejson as json
 import uuid
+from datetime import datetime, timedelta
+from calendar import timegm
 from twython import Twython
 from config import *
 
@@ -36,6 +38,13 @@ def gen_user_id():
         user_id = uuid.uuid4()
     return str(user_id)
 
+def is_expired(cookies):
+    now = datetime.now()
+    return now >= datetime.fromtimestamp(int(cookies['timestamp']))
+
+def get_timestamp(time):
+    return str(timegm(time.timetuple()))
+
 
 bad_request = ('bad request', 400)
 
@@ -43,20 +52,22 @@ bad_request = ('bad request', 400)
 
 @app.route('/')
 def index():
-    if request.cookies.get('user_id') is None:
+    if request.cookies.get('user_id') is None or is_expired(request.cookies):
         return redirect(url_for('redirect_to_twitter'))
 
-    return render_template('index.html')
+    return render_template('index.html', fb_id=FACEBOOK_APP_ID)
 
 
 
 @app.route('/redirect_tw')
 def redirect_to_twitter():
     twitter_oauth_client = Twython(TWITTER_APP_KEY, TWITTER_APP_SECRET)
+    print '+++++++++', TW_CB
     auth = twitter_oauth_client.get_authentication_tokens(callback_url=TW_CB)
     user_id = cache_tw_oauth(auth)
     response = redirect(auth['auth_url'])
     response.set_cookie('user_id', user_id)
+    response.set_cookie('timestamp', get_timestamp(datetime.now() + timedelta(days=1)))
     return response
     
 

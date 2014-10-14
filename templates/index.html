@@ -1,4 +1,3 @@
-{% raw %}
 <!doctype html>
 <html ng-app="app">
     <head>
@@ -20,6 +19,8 @@
         <script src="//code.jquery.com/jquery-1.10.2.js"></script>
         <script src="//code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
         <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+        <script>var fbAppId = "{{fb_id|safe}}";</script>
+        {% raw %}
         <script src="/static/data.js"></script>
         <script src="/static/main.js"></script>
     </head>
@@ -43,7 +44,7 @@
         <div id="map-canvas"></div>
         <div id="info-canvas" ng-controller="controller">
             <table>
-                <tr ng-repeat="tweet in tweets">
+                <tr ng-repeat="tweet in tweets" ng-mouseenter="showRegion(tweet)" ng-mouseleave="clearRects()">
                     <td class="info-content">{{ tweet.text }}</td>
                 </tr>
             </table>
