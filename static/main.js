@@ -167,17 +167,14 @@ app.controller('controller', function($scope) {
   var trendGroup = CreateTrendGroup(map);
   var tweetGroup = CreateTweetGroup($scope);
   findTrendingLoc(trendGroup, tweetGroup);
-  $scope.rects = []
+  $scope.rects = [];
+  $scope.hovered = null;
 
   $scope.showRegion = function(tweet) {
     var trendingLocIds = tweetGroup.getTweetTrendingLocs(tweet);
     var trendingLocs = trendingLocIds.map(trendGroup.getLoc);
     $scope.rects = trendingLocs.map(mapRegion);
-    $scope.tweets.forEach(function(t) {
-        if (t.id != tweet.id) {
-            t.hidden = true;
-        }
-    });
+    $scope.hovered = tweet.id;
     moveMap(trendingLocs);
   }
 
@@ -188,11 +185,12 @@ app.controller('controller', function($scope) {
     $scope.tweets.forEach(function(t) {
         t.hidden = false;
     });
+    $scope.hovered = null;
     $scope.rects = [];
   }
 
   $scope.shouldShow = function(tweet) {
-    return tweet.hidden !== true;
+    return $scope.hovered == null || tweet.id == $scope.hovered;
   }
 });
 
