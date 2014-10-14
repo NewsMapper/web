@@ -337,12 +337,13 @@ var getZoomLevel = function(bound1, bound2) {
 var moveMap = function(locs) {
     var bound1 = locs[0].location.boundary.northEast;
     var bound2 = locs[0].location.boundary.southWest;
+    var center = locs[0].location.center;
     var zoomLevel = getZoomLevel(bound1, bound2);
     var center = locs[0].location.center;
     if (Math.abs(zoomLevel - MIN_ZOOM) > 1) {
-        map.panToBounds(new google.maps.LatLngBounds(
-                new google.maps.LatLng(bound1.latitude, bound2.longitude),
-                new google.maps.LatLng(bound2.latitude, bound1.longitude)
+        map.panTo(new google.maps.LatLng(
+                center.latitude,
+                center.longitude
             ));
     }
 }
