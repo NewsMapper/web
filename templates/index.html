@@ -44,7 +44,7 @@
         <div id="map-canvas"></div>
         <div id="info-canvas" ng-controller="controller">
             <table>
-                <tr ng-repeat="tweet in tweets" ng-mouseenter="showRegion(tweet)" ng-mouseleave="clearRects()">
+                <tr ng-repeat="tweet in tweets" ng-mouseenter="showRegion(tweet)" ng-mouseleave="clearRects()" ng-visible="shouldShow(tweet)" >
                     <td class="info-content">{{ tweet.text }}</td>
                 </tr>
             </table>

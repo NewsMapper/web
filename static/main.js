@@ -173,6 +173,11 @@ app.controller('controller', function($scope) {
     var trendingLocIds = tweetGroup.getTweetTrendingLocs(tweet);
     var trendingLocs = trendingLocIds.map(trendGroup.getLoc);
     $scope.rects = trendingLocs.map(mapRegion);
+    $scope.tweets.forEach(function(t) {
+        if (t.id != tweet.id) {
+            t.hidden = true;
+        }
+    });
     moveMap(trendingLocs);
   }
 
@@ -180,10 +185,23 @@ app.controller('controller', function($scope) {
     $scope.rects.forEach(function(rect) {
         rect.setMap(null);
     });
+    $scope.tweets.forEach(function(t) {
+        t.hidden = false;
+    });
     $scope.rects = [];
   }
-  
 
+  $scope.shouldShow = function(tweet) {
+    return tweet.hidden !== true;
+  }
 });
+
+app.directive('ngVisible', function () {
+    return function (scope, element, attr) {
+        scope.$watch(attr.ngVisible, function (visible) {
+            element.css('opacity', visible ? '1' : '0.25');
+        });
+    };
+})
 
 
