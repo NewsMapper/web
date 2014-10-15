@@ -1,14 +1,18 @@
-Array.prototype.has = function(p) {
-    return this.filter(p).length != 0;
-}
-
-
 var TWITTER_AVAILABLE_TRENDS = '/twitter_api/available_trends';
 var TWITTER_CLOSEST_TRENDS = '/twitter_api/closest_trends';
 var TWITTER_SEARCH = '/twitter_api/search';
 var TWITTER_TRENDS = '/twitter_api/trends';
 var MAX_ZOOM = 16;
 var MIN_ZOOM = 3;
+var MAX_LOC = 15;
+var tweetGroup;
+var trendGroup;
+
+
+Array.prototype.has = function(p) {
+    return this.filter(p).length != 0;
+}
+
 
 var CreateEventGroup = function() {
     var __eventList = [];
@@ -202,9 +206,12 @@ var lookupWOEID = function(woeid, callback) {
         q: 'select * from geo.places where woeid ="'+woeid+'"',
         format: 'json'
     }, function(response) {
+        popRank = response.query.results.place.popRank;
+        areaRank = response.query.results.place.areaRank;
         callback({
             center: response.query.results.place.centroid,
-            boundary: response.query.results.place.boundingBox
+            boundary: response.query.results.place.boundingBox,
+            significance: Math.sqrt(areaRank) * popRank
         });
     });
 };
@@ -267,43 +274,39 @@ var mapRegion = function(trendingLoc) {
     return rectangle;
 };
 
+var fetchTweets = function() {
+    var enclosedTrends = [];
+    var trends = trendGroup.getTrends();
+    var enclosedTrends = []
+    var sw = map.getBounds().getSouthWest();
+    var ne = map.getBounds().getNorthEast();
+    var dlng = ne.lng() - sw.lng();
+    var widthRatio = ($(window).width() - $('#info-canvas').width()) / $(window).width();
+    dlng *= widthRatio;
+    var windowBounds = new google.maps.LatLngBounds(
+                            new google.maps.LatLng(sw.lat(), ne.lng() - dlng),
+                            ne);
+    for (var woeid in trends) {
+        var trend = trends[woeid];
+        var trendCenter = trend.location.center;
+        var trendLatLng = new google.maps.LatLng(
+                            trendCenter.latitude,
+                            trendCenter.longitude);
 
-var setZoomLevel = function(zoomLevel) {
-    var interval = 500;
-    var zoomDelta = zoomLevel - map.getZoom();
-    if (Math.abs(zoomDelta) > 4) {
-        map.setZoom(map.getZoom() + zoomDelta/2);
-        setTimeout(function() {
-            map.setZoom(zoomLevel);
-        }, interval);
-    } else {
-        map.setZoom(zoomLevel);
+
+        if (windowBounds.contains(trendLatLng)) {
+            enclosedTrends.push(trend);
+        }
     }
 
-    
-}
+    enclosedTrends.sort(function(a, b) {
+        return a.significance - b.significance;
+    });
 
-var getZoomLevel = function(bound1, bound2) {
-    var maxArea = 360*180;
-    var area = Math.abs((bound1.latitude - bound2.latitude)*
-                        (bound1.longitude - bound2.longitude))
-    var ratio = area/maxArea;
-    return zoomLevel = MAX_ZOOM - (MAX_ZOOM - MIN_ZOOM)*ratio;
-}
-
-
-
-var moveMap = function(locs) {
-    var bound1 = locs[0].location.boundary.northEast;
-    var bound2 = locs[0].location.boundary.southWest;
-    var center = locs[0].location.center;
-    var zoomLevel = getZoomLevel(bound1, bound2);
-    var center = locs[0].location.center;
-    if (Math.abs(zoomLevel - MIN_ZOOM) > 1) {
-        map.panTo(new google.maps.LatLng(
-                center.latitude,
-                center.longitude
-            ));
+    for (var i = 0; i < MAX_LOC && i < enclosedTrends.length; i++) {
+        fetchTweetsByLoc(enclosedTrends[i].woeid, tweetGroup);
     }
-}
+};
+
+
 

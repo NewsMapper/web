@@ -1,6 +1,5 @@
 var map;
-var tweetGroup;
-var trendGroup;
+
 
 function setBounds() {
   var mh = $(window).height() - 48;
@@ -110,6 +109,7 @@ $(document).ready(function() {
       createMarker(points[i]);
     }
   }
+
   google.maps.event.addDomListener(window, 'load', initialize);
   
   $('#field').click(function() {
@@ -168,22 +168,11 @@ $(document).ready(function() {
     } else {
       $('#info-canvas').css('display', 'block');
     }
-    
-    var enclosedTrends = [];
-    var trends = trendGroup.getTrends();
 
-    for (var woeid in trends) {
-      trend = trends[woeid];
-      trendCenter = trend.location.center;
-      trendLatLng = new google.maps.LatLng(
-        trendCenter.latitude,
-        trendCenter.longitude);
-      if (map.getBounds().contains(trendLatLng)) {
-        fetchTweetsByLoc(woeid, tweetGroup);
-      }
-    }
+    fetchTweets();
 
   });
+
   var pano = map.getStreetView();
   google.maps.event.addListener(pano, 'visible_changed', function() {
     if (pano.getVisible()) $('#info-canvas').css('display', 'none');
