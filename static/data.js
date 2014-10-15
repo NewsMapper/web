@@ -266,7 +266,7 @@ var mapRegion = function(trendingLoc) {
     var center = trendingLoc.location.center;
     var legend;
     console.log(center);
-    if (map.getZoom() > 4) {
+    if (map.getZoom() > 5) {
         legend = new google.maps.Rectangle({
             strokeColor: '#FF0000',
             strokeOpacity: 0,
