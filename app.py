@@ -4,117 +4,63 @@ import simplejson as json
 import uuid
 from datetime import datetime, timedelta
 from calendar import timegm
-from twython import Twython
 from config import *
 
 app = Flask(__name__)
 r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
-TW_REDIS_KEY_PREFIX = "TW_REDIS"
-TW_CB = '%s/recv_twcb' % HOST_URL
+
+TW_TRENDING = 'TW:TRENDING_TOPICS'
+TW_TRENDING_LOCS = 'TW:TRENDING_LOCS'
+TW_TRENDING_LOC = 'TW:TRENDING'
+
+def get_tweet_key(topic):
+    return '%s:%s'% (TW_TRENDING, topic)
+
+def get_loc_key(loc):
+    return '%s:%s'% (TW_TRENDING_LOC, loc)
 
 
-def get_tw_redis_key(user_id):
-    return '%s:%s' % (TW_REDIS_KEY_PREFIX, user_id)
+def tw_search(topic):
+    key = get_tweet_key(topic)
+    val = r.get(key)
+    if val is not None:
+        return json.loads(val.decode('utf-8'))
 
 
-def cache_tw_oauth(tw_credentials, user_id=None):
-    if user_id is None:
-        user_id = gen_user_id()
-    r.set(get_tw_redis_key(user_id), json.dumps(tw_credentials))
-    return user_id
+def tw_available_trends():
+    trending_locs = r.lrange(TW_TRENDING_LOCS, 0, -1)
+    return map(int, trending_locs)
 
 
-def get_tw_oauth(user_id):
-    oauth_val = r.get(get_tw_redis_key(user_id))
-    if oauth_val is None:
-        return None
-    else:
-        return json.loads(oauth_val)
-
-
-def gen_user_id():
-    user_id = uuid.uuid4()
-    while get_tw_oauth(user_id) is not None:
-        user_id = uuid.uuid4()
-    return str(user_id)
-
-def is_expired(cookies):
-    now = datetime.now()
-    return now >= datetime.fromtimestamp(int(cookies['timestamp']))
-
-def get_timestamp(time):
-    return str(timegm(time.timetuple()))
+def tw_trends(woeid):
+    key = get_loc_key(woeid)
+    val = r.get(key)
+    return json.loads(val.decode('utf-8'))
 
 
 bad_request = ('bad request', 400)
 
 
-
 @app.route('/')
 def index():
-    if request.cookies.get('user_id') is None or is_expired(request.cookies):
-        return redirect(url_for('redirect_to_twitter'))
-
     return render_template('index.html', fb_id=FACEBOOK_APP_ID)
-
-
-
-@app.route('/redirect_tw')
-def redirect_to_twitter():
-    twitter_oauth_client = Twython(TWITTER_APP_KEY, TWITTER_APP_SECRET)
-    print '+++++++++', TW_CB
-    auth = twitter_oauth_client.get_authentication_tokens(callback_url=TW_CB)
-    user_id = cache_tw_oauth(auth)
-    response = redirect(auth['auth_url'])
-    response.set_cookie('user_id', user_id)
-    response.set_cookie('timestamp', get_timestamp(datetime.now() + timedelta(days=1)))
-    return response
-    
-
-
-
-@app.route('/recv_twcb')
-def receive_twitter_callback():
-    oauth_verifier = request.args['oauth_verifier']
-    user_id = request.cookies['user_id']
-    auth = get_tw_oauth(user_id)
-    twitter_oauth_client = Twython(TWITTER_APP_KEY,
-                                 TWITTER_APP_SECRET,
-                                 auth['oauth_token'],
-                                 auth['oauth_token_secret'])
-    credentials = twitter_oauth_client.get_authorized_tokens(oauth_verifier)
-    cache_tw_oauth(credentials, user_id=user_id)
-    return redirect('/')
 
 
 
 @app.route('/twitter_api/<endpoint>')
 def search_twitter(endpoint):
-    user_id = request.cookies.get('user_id')
-    if user_id is None:
-        return bad_request
-    auth = get_tw_oauth(user_id)
-
-    if auth is None:
-        return bad_request
-
-    twitter_oauth_client = Twython(TWITTER_APP_KEY,
-                                TWITTER_APP_SECRET,
-                                auth['oauth_token'],
-                                auth['oauth_token_secret'])
-
     if endpoint == 'search':
-        result = twitter_oauth_client.search(**request.args)
-    elif endpoint == 'closest_trends':
-        result = {'places': twitter_oauth_client.get_closest_trends(**request.args)}
-    elif endpoint == 'trends':
-        result = {'trends': twitter_oauth_client.get_place_trends(**request.args)}
+        result = tw_search(request.args['q'])
     elif endpoint == 'available_trends':
-        result = {'places': twitter_oauth_client.get_available_trends(**request.args)}
+        result = {'places': tw_available_trends()}
+    elif endpoint == 'trends':
+        result = {'trends': tw_trends(request.args['id'])}
     else:
         return bad_request
 
-    return jsonify(result)
+    response = jsonify(result)
+    response.cache_control.max_age = 1200
+    return response
 
 
 

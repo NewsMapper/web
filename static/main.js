@@ -1,4 +1,6 @@
 var map;
+var tweetGroup;
+var trendGroup;
 
 function setBounds() {
   var mh = $(window).height() - 48;
@@ -142,16 +144,45 @@ $(document).ready(function() {
         $('#field').css('cursor', 'not-allowed');
   }
 
+
+  google.maps.event.addListener(map, "dragstart", function() {
+    $('#info-canvas').css('display', 'none');
+  });
+
+
+
+
+
   var first = true;
+
   google.maps.event.addListener(map, "idle", function() {
-    if (first) {
-      if ($(window).width()>740) {
+    tweetGroup.clear();
+
+    if (first && $(window).width() > 740) {
         $('#info-canvas').toggle('slide', { direction: 'left' }, 100);
         first = false;
+    }
+
+    if ($(window).width() < 740) {
+      $('#info-canvas').css('display', 'none');
+    } else {
+      $('#info-canvas').css('display', 'block');
+    }
+    
+    var enclosedTrends = [];
+    var trends = trendGroup.getTrends();
+
+    for (var woeid in trends) {
+      trend = trends[woeid];
+      trendCenter = trend.location.center;
+      trendLatLng = new google.maps.LatLng(
+        trendCenter.latitude,
+        trendCenter.longitude);
+      if (map.getBounds().contains(trendLatLng)) {
+        fetchTweetsByLoc(woeid, tweetGroup);
       }
     }
-    if ($(window).width()<740) $('#info-canvas').css('display', 'none');
-    else $('#info-canvas').css('display', 'block');
+
   });
   var pano = map.getStreetView();
   google.maps.event.addListener(pano, 'visible_changed', function() {
@@ -164,29 +195,34 @@ $(document).ready(function() {
 var app = angular.module('app', []);
 app.controller('controller', function($scope) {
 
-  var trendGroup = CreateTrendGroup(map);
-  var tweetGroup = CreateTweetGroup($scope);
+  trendGroup = CreateTrendGroup(map);
+  tweetGroup = CreateTweetGroup($scope);
   findTrendingLoc(trendGroup, tweetGroup);
   $scope.rects = [];
   $scope.hovered = null;
+
+
 
   $scope.showRegion = function(tweet) {
     var trendingLocIds = tweetGroup.getTweetTrendingLocs(tweet);
     var trendingLocs = trendingLocIds.map(trendGroup.getLoc);
     $scope.rects = trendingLocs.map(mapRegion);
     $scope.hovered = tweet.id;
-    moveMap(trendingLocs);
   }
 
   $scope.clearRects = function() {
     $scope.rects.forEach(function(rect) {
         rect.setMap(null);
     });
+    $scope.hovered = null;
+    $scope.rects = [];
+  }
+
+  $scope.clear = function() {
     $scope.tweets.forEach(function(t) {
         t.hidden = false;
     });
-    $scope.hovered = null;
-    $scope.rects = [];
+    $scope.clearRects();
   }
 
   $scope.shouldShow = function(tweet) {

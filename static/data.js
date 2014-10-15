@@ -27,7 +27,7 @@ var CreateEventGroup = function() {
 };
 
 var CreateTrendGroup = function(map) {
-    var __trendingLocs = [];
+    var __trendingLocs = {};
     return {
         getTrends: function() {
             return __trendingLocs;
@@ -71,70 +71,30 @@ var CreateTweetGroup = function($scope) {
             if (!this.hasTopic(topic)) {
                 __topics.push(topic);
             }
+        },
+        clear: function() {
+            $scope.$apply(function() {
+                $scope.tweets = [];
+            });
+
+            __topics = [];
+            __locMapping = {};
         }
     }
 };
 
 
 
-var CreateRequestQueue = function(interval) {
-    var __requests = [];
-    var __running = false;
-    var __interval = interval*1000;
 
-
-    var __dispatch = function() {
-        var request = __requests.dequeue();
-        $.getJSON(request.url, {}, function(response) {
-            if (__requests.length > 0) {
-                setTimeout(__dispatch, __interval);
-            } else {
-                __running = false;
-            }
-            request.callback(response);
-        });
-    };
-
-    __requests.dequeue = function() {
-        return Array.prototype.shift.apply(this);
-    };
-
-
-    __requests.push = function(request) {
-        Array.prototype.push.apply(this, [request]);
-
-        if (!__running) {
-            __dispatch();
-            __running = true;
-        }
-    };
-
-    return {
-        enqueue: function(request) {
-            __requests.push(request);
-        }
-    };
-};
-
-
-
-var tweetFetchingQueue = CreateRequestQueue(5);
 var fetchTweetByTopic = function(topic, callback) {
     topic = encodeURIComponent(topic);
-    tweetFetchingQueue.enqueue({
-        url: TWITTER_SEARCH+'?q='+topic+'&result_type=popular',
-        callback: callback
-    });
+    $.getJSON(TWITTER_SEARCH+'?q='+topic, {}, callback);
 };
 
 
 // todo: make priority queue
-var tweetTrendFetchingQueue = CreateRequestQueue(60);
 var fetchTrends = function(woeid, callback) {
-    tweetTrendFetchingQueue.enqueue({
-        url: TWITTER_TRENDS+'?id='+woeid,
-        callback: callback
-    });
+    $.getJSON(TWITTER_TRENDS+'?id='+woeid, {}, callback);
 };
 
 var processTweet = function(tweet) {
@@ -146,12 +106,12 @@ var processTweet = function(tweet) {
 
 var fetchTweetsByLoc = function(woeid, tweetGroup) {
     fetchTrends(woeid, function(response) {
-        response.trends[0].trends.forEach(function(trend) {
-            if (!tweetGroup.hasTopic(trend.name)) {
-                fetchTweetByTopic(trend.name, function(searchResult) {
+        response.trends.forEach(function(trend) {
+            if (!tweetGroup.hasTopic(trend)) {
+                fetchTweetByTopic(trend, function(searchResult) {
                     var processedTweets = searchResult.statuses.map(processTweet);
                     processedTweets.forEach(function(t) {
-                        tweetGroup.push(woeid, t, trend.name);
+                        tweetGroup.push(woeid, t, trend);
                     });
                 });
             }
@@ -252,13 +212,12 @@ var lookupWOEID = function(woeid, callback) {
 
 var findTrendingLoc = function(trends, tweetGroup) {
     $.getJSON(TWITTER_AVAILABLE_TRENDS, {}, function(response) {
-        response.places.forEach(function(trend) {
-            lookupWOEID(trend.woeid, function(location) {
+        response.places.forEach(function(woeid) {
+            lookupWOEID(woeid, function(location) {
                 trends.push({
-                    woeid: trend.woeid,
+                    woeid: woeid,
                     location: location
                 });
-                fetchTweetsByLoc(trend.woeid, tweetGroup);
             });
         });
     });
