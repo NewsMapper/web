@@ -206,10 +206,13 @@ var lookupWOEID = function(woeid, callback) {
         q: 'select * from geo.places where woeid ="'+woeid+'"',
         format: 'json'
     }, function(response) {
-        popRank = response.query.results.place.popRank;
-        areaRank = response.query.results.place.areaRank;
+        var popRank = response.query.results.place.popRank;
+        var areaRank = response.query.results.place.areaRank;
+        var center = response.query.results.place.centroid;
+        center.latitude = parseFloat(center.latitude);
+        center.longitude = parseFloat(center.longitude);
         callback({
-            center: response.query.results.place.centroid,
+            center: center,
             boundary: response.query.results.place.boundingBox,
             significance: Math.sqrt(areaRank) * popRank
         });
@@ -260,32 +263,38 @@ window.fbAsyncInit = function() {
 var mapRegion = function(trendingLoc) {
     var bound1 = trendingLoc.location.boundary.northEast;
     var bound2 = trendingLoc.location.boundary.southWest;
-    var rectangle    = new google.maps.Rectangle({
-        strokeColor: '#FF0000',
-        strokeOpacity: 0,
-        strokeWeight: 2,
-        fillColor: '#FF0000',
-        fillOpacity: 0.3,
-        map: map,
-        bounds: new google.maps.LatLngBounds(
-          new google.maps.LatLng(bound1.latitude, bound2.longitude),
-          new google.maps.LatLng(bound2.latitude, bound1.longitude))
-    });
-    return rectangle;
+    var center = trendingLoc.location.center;
+    var legend;
+    console.log(center);
+    if (map.getZoom() > 4) {
+        legend = new google.maps.Rectangle({
+            strokeColor: '#FF0000',
+            strokeOpacity: 0,
+            strokeWeight: 2,
+            fillColor: '#FF0000',
+            fillOpacity: 0.4,
+            map: map,
+            bounds: new google.maps.LatLngBounds(
+              new google.maps.LatLng(bound1.latitude, bound2.longitude),
+              new google.maps.LatLng(bound2.latitude, bound1.longitude))
+        }); 
+    } else {
+        legend = new google.maps.Marker({
+            position: new google.maps.LatLng(
+                center.latitude,
+                center.longitude),
+            map: map,
+            icon: '/static/img/dot.png'
+        });
+    }
+    return legend;
 };
 
 var fetchTweets = function() {
     var enclosedTrends = [];
     var trends = trendGroup.getTrends();
     var enclosedTrends = []
-    var sw = map.getBounds().getSouthWest();
-    var ne = map.getBounds().getNorthEast();
-    var dlng = ne.lng() - sw.lng();
-    var widthRatio = ($(window).width() - $('#info-canvas').width()) / $(window).width();
-    dlng *= widthRatio;
-    var windowBounds = new google.maps.LatLngBounds(
-                            new google.maps.LatLng(sw.lat(), ne.lng() - dlng),
-                            ne);
+    var windowBounds = getWindowBounds();
     for (var woeid in trends) {
         var trend = trends[woeid];
         var trendCenter = trend.location.center;
@@ -306,6 +315,38 @@ var fetchTweets = function() {
     for (var i = 0; i < MAX_LOC && i < enclosedTrends.length; i++) {
         fetchTweetsByLoc(enclosedTrends[i].woeid, tweetGroup);
     }
+};
+
+
+
+var getWindowBounds = function() {
+    var sw = map.getBounds().getSouthWest();
+    var ne = map.getBounds().getNorthEast();
+    var swLng = sw.lng();
+    var neLng = ne.lng();
+    var widthRatio = ($('#info-canvas').width() + 10.0) / $(window).width();
+    console.log(widthRatio);
+    if (swLng < neLng) {
+        var dlng = neLng - swLng;
+    } else {
+        var dlng = 360 - (swLng - neLng);
+    }
+
+    console.log(dlng);
+    dlng *= widthRatio;
+    swLng += dlng;
+    console.log(dlng);
+
+    if (swLng > 180) {
+        swLng = -180 + (swLng - 180);
+    } else if (swLng < -180){
+        swLng = 180 - (swLng + 180);
+    }
+
+    var windowBounds = new google.maps.LatLngBounds(
+                            new google.maps.LatLng(sw.lat(), swLng),
+                            ne);
+    return windowBounds;
 };
 
 
