@@ -324,7 +324,7 @@ var getWindowBounds = function() {
     var ne = map.getBounds().getNorthEast();
     var swLng = sw.lng();
     var neLng = ne.lng();
-    var widthRatio = ($('#info-canvas').width() + 11.0) / $(window).width();
+    var widthRatio = ($('#info-canvas').width() + 50.0) / $(window).width();
     console.log(widthRatio);
     if (swLng < neLng) {
         var dlng = neLng - swLng;
