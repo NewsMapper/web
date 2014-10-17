@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime, timedelta
 from calendar import timegm
 from config import *
+from random import shuffle
 
 app = Flask(__name__)
 r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
@@ -12,6 +13,12 @@ r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
 TW_TRENDING = 'TW:TRENDING_TOPICS'
 TW_TRENDING_LOCS = 'TW:TRENDING_LOCS'
 TW_TRENDING_LOC = 'TW:TRENDING'
+REDDIT_SUBREDDITS = 'REDDIT:SUBREDDITS'
+REDDIT_SUBREDDIT = 'REDDIT:SUBREDDIT'
+
+
+def get_subreddit_key(rid):
+    return '%s:%s' % (REDDIT_SUBREDDIT, rid)
 
 def get_tweet_key(topic):
     return '%s:%s'% (TW_TRENDING, topic)
@@ -38,7 +45,9 @@ def tw_trends(woeid):
     return json.loads(val.decode('utf-8'))
 
 
-bad_request = ('bad request', 400)
+
+not_found = ('not found', 404)
+
 
 
 @app.route('/')
@@ -52,15 +61,44 @@ def search_twitter(endpoint):
     if endpoint == 'search':
         result = tw_search(request.args['q'])
     elif endpoint == 'available_trends':
-        result = {'places': tw_available_trends()}
+        trending_locs = map(int, tw_available_trends())
+        shuffle(trending_locs)
+        result = {'places': trending_locs}
     elif endpoint == 'trends':
         result = {'trends': tw_trends(request.args['id'])}
     else:
-        return bad_request
+        return not_found
 
     response = jsonify(result)
     response.cache_control.max_age = 1200
     return response
+
+
+
+
+
+@app.route('/reddit_api/r')
+def search_available_subreddits():
+    subreddits = r.lrange(REDDIT_SUBREDDITS, 0, -1)
+    response = jsonify({'subreddits': map(json.loads, subreddits)})
+    response.cache_control.max_age = 1800
+    return response
+
+
+
+@app.route('/reddit_api/r/<rid>')
+def get_subreddit(rid):
+    key = get_subreddit_key(rid.lower())
+    subreddit = r.get(key)
+    if subreddit is None:
+        return not_found
+    
+    response = jsonify({'topics': json.loads(subreddit)})
+    response.cache_control.max_age = 1800
+    return response
+
+
+
 
 
 

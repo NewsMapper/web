@@ -2,11 +2,15 @@ var TWITTER_AVAILABLE_TRENDS = '/twitter_api/available_trends';
 var TWITTER_CLOSEST_TRENDS = '/twitter_api/closest_trends';
 var TWITTER_SEARCH = '/twitter_api/search';
 var TWITTER_TRENDS = '/twitter_api/trends';
+var REDDIT_AVAILABLE_SUBREDDITS = '/reddit_api/r';
+var REDDIT_SUBREDDIT = '/reddit_api/r/';
 var MAX_ZOOM = 16;
 var MIN_ZOOM = 3;
-var MAX_LOC = 15;
+var MAX_REQUEST = 15;
+var SENT_REQUEST = 0;
 var tweetGroup;
 var trendGroup;
+var curRedditId = 1;
 
 
 Array.prototype.has = function(p) {
@@ -32,22 +36,34 @@ var CreateEventGroup = function() {
 
 var CreateTrendGroup = function(map) {
     var __trendingLocs = {};
+    var __fetchFuncs = {};
     return {
         getTrends: function() {
             return __trendingLocs;
         },
         getLoc: function(woeid) {
-            return __trendingLocs[woeid];
+            var loc = __trendingLocs[woeid];
+            loc.fetchFuncs = __fetchFuncs[woeid];
+
+            return loc
         },
-        push: function(trendingLoc) {
-            return __trendingLocs[trendingLoc.woeid] = trendingLoc;
+        push: function(trendingLoc, fetchFunc) {
+            if (__trendingLocs[trendingLoc.woeid] === undefined ||
+                    __trendingLocs[trendingLoc.woeid].rid === undefined) {
+                __trendingLocs[trendingLoc.woeid] = trendingLoc;
+            }
+
+            if (__fetchFuncs[trendingLoc.woeid] !== undefined) {
+                __fetchFuncs[trendingLoc.woeid].push(fetchFunc);
+            } else {
+                __fetchFuncs[trendingLoc.woeid] = [fetchFunc];
+            }
         }
     };
 };
 
-
+// todo: rename this to reflect the fact that this also holds reddits and other media item
 var CreateTweetGroup = function($scope) {
-    $scope.tweets = [];
     var __locMapping = {};
     var __topics = []
     return {
@@ -58,21 +74,35 @@ var CreateTweetGroup = function($scope) {
             return __topics.has(function(t) {return t === topic});
         },
         push: function(woeid, tweet, topic) {
+
             if (tweet === undefined) return;
-            var tweetExisted = $scope.tweets.has(function(t) {return t.id === tweet.id});
+
+            var tweetExisted = $scope.tweets.has(function(t) {
+                if (t.id != tweet.id) {
+                    return false;
+                } else {
+                    return t.source == tweet.source;
+                }
+            });
+
+
             if (!tweetExisted) {
                 $scope.$apply(function() {
                     $scope.tweets.push(tweet);
                 });
+            }
+
+            if (__locMapping[tweet.id] === undefined) {
                 __locMapping[tweet.id] = [];
             }
+    
 
             var mappingExisted = __locMapping[tweet.id].has(function(w) {return w == woeid});
             if (!mappingExisted) {
                 __locMapping[tweet.id].push(woeid);
             }
 
-            if (!this.hasTopic(topic)) {
+            if (topic !== undefined && !this.hasTopic(topic)) {
                 __topics.push(topic);
             }
         },
@@ -91,30 +121,33 @@ var CreateTweetGroup = function($scope) {
 
 
 var fetchTweetByTopic = function(topic, callback) {
+    SENT_REQUEST ++;
     topic = encodeURIComponent(topic);
     $.getJSON(TWITTER_SEARCH+'?q='+topic, {}, callback);
 };
 
 
-// todo: make priority queue
+var fetchSubreddit = function(rid, callback) {
+    SENT_REQUEST ++;
+    $.getJSON(REDDIT_SUBREDDIT+rid, {}, callback);
+}
+
+
 var fetchTrends = function(woeid, callback) {
+    SENT_REQUEST ++;
     $.getJSON(TWITTER_TRENDS+'?id='+woeid, {}, callback);
 };
 
-var processTweet = function(tweet) {
-    var processedTweet;
-    processedTweet = tweet;
-    return processedTweet;
-};
 
 
-var fetchTweetsByLoc = function(woeid, tweetGroup) {
+var fetchTweetByLoc = function(loc, tweetGroup) {
+    var woeid = loc.woeid;
     fetchTrends(woeid, function(response) {
         response.trends.forEach(function(trend) {
             if (!tweetGroup.hasTopic(trend)) {
                 fetchTweetByTopic(trend, function(searchResult) {
-                    var processedTweets = searchResult.statuses.map(processTweet);
-                    processedTweets.forEach(function(t) {
+                    searchResult.statuses.forEach(function(t) {
+                        t.source = 'twitter';
                         tweetGroup.push(woeid, t, trend);
                     });
                 });
@@ -122,6 +155,29 @@ var fetchTweetsByLoc = function(woeid, tweetGroup) {
         });
     });
 };
+
+
+var fetchRedditByLoc = function(loc, tweetGroup) {
+    var woeid = loc.woeid;
+    var rid = loc.rid;
+    if (rid === undefined) {
+        return;
+    }
+
+    fetchSubreddit(rid, function(response) {
+        response.topics.forEach(function(topic) {
+            topic.source = 'reddit';
+            topic.id = curRedditId++;
+            tweetGroup.push(woeid, topic);
+        });
+    });
+};
+
+
+
+
+
+
     
 var eventGroup = CreateEventGroup();
 
@@ -199,39 +255,79 @@ var fetchFbEvents = function(accessToken, eventGroup) {
     getFbUserId(getUserEvents);
 };
 
-//todo: refactor to create a closured object to contain all of the functions used to fetch tweets
 
-var lookupWOEID = function(woeid, callback) {
+var lookupWOEID = function(query, callback) {
+    if (typeof query === 'number') {
+        var q = 'select * from geo.places where woeid="'+query+'"';
+        var fromWOEID = true;
+    } else {
+        var q = 'select * from geo.places where text="'+query+'"';
+        var fromWOEID = false;
+    }
+
     $.getJSON('https://query.yahooapis.com/v1/public/yql',{
-        q: 'select * from geo.places where woeid ="'+woeid+'"',
+        q: q,
         format: 'json'
     }, function(response) {
-        var popRank = response.query.results.place.popRank;
-        var areaRank = response.query.results.place.areaRank;
-        var center = response.query.results.place.centroid;
+        if (response.query.count === 0) {
+            return;
+        }
+
+        if (fromWOEID) {
+            var place = response.query.results.place;
+        } else {
+            var place = response.query.results.place[0];
+        }
+
+        if (place === undefined) {
+            return;
+        }
+
+        var center = place.centroid;
+
         center.latitude = parseFloat(center.latitude);
         center.longitude = parseFloat(center.longitude);
         callback({
             center: center,
-            boundary: response.query.results.place.boundingBox,
-            significance: Math.sqrt(areaRank) * popRank
+            boundary: place.boundingBox,
+            woeid: place.woeid
         });
     });
 };
 
 
-var findTrendingLoc = function(trends, tweetGroup) {
+var findTrendingTweetLoc = function(trends, tweetGroup) {
     $.getJSON(TWITTER_AVAILABLE_TRENDS, {}, function(response) {
         response.places.forEach(function(woeid) {
             lookupWOEID(woeid, function(location) {
                 trends.push({
                     woeid: woeid,
-                    location: location
-                });
+                    location: location,
+                }, fetchTweetByLoc);
             });
         });
     });
 };
+
+
+
+var findTrendingRedditLoc = function(trends, redditGroup) {
+    $.getJSON(REDDIT_AVAILABLE_SUBREDDITS, {}, function(response) {
+        response.subreddits.forEach(function(subreddit) {
+            lookupWOEID(subreddit.name, function(location) {
+                trends.push({
+                    woeid: location.woeid,
+                    location: location,
+                    rid: subreddit.rid,
+                }, fetchRedditByLoc);
+            });
+        });
+    });
+}
+
+
+
+
 
 
 
@@ -265,7 +361,6 @@ var mapRegion = function(trendingLoc) {
     var bound2 = trendingLoc.location.boundary.southWest;
     var center = trendingLoc.location.center;
     var legend;
-    console.log(center);
     if (map.getZoom() > 5) {
         legend = new google.maps.Rectangle({
             strokeColor: '#FF0000',
@@ -278,7 +373,7 @@ var mapRegion = function(trendingLoc) {
               new google.maps.LatLng(bound1.latitude, bound2.longitude),
               new google.maps.LatLng(bound2.latitude, bound1.longitude))
         }); 
-    } else {
+    } else if (trendingLoc.woeid !== 1) {
         legend = new google.maps.Marker({
             position: new google.maps.LatLng(
                 center.latitude,
@@ -290,13 +385,13 @@ var mapRegion = function(trendingLoc) {
     return legend;
 };
 
-var fetchTweets = function() {
-    var enclosedTrends = [];
+var fetchItems = function() {
     var trends = trendGroup.getTrends();
-    var enclosedTrends = []
     var windowBounds = getWindowBounds();
+    SENT_REQUEST = 0;
+
     for (var woeid in trends) {
-        var trend = trends[woeid];
+        var trend = trendGroup.getLoc(woeid);
         var trendCenter = trend.location.center;
         var trendLatLng = new google.maps.LatLng(
                             trendCenter.latitude,
@@ -304,18 +399,19 @@ var fetchTweets = function() {
 
 
         if (windowBounds.contains(trendLatLng)) {
-            enclosedTrends.push(trend);
+            trend.fetchFuncs.forEach(function(fetchFunc) {
+                fetchFunc(trend, tweetGroup);
+            });
+
+            if (SENT_REQUEST > MAX_REQUEST) {
+                break;
+            }
         }
     }
 
-    enclosedTrends.sort(function(a, b) {
-        return a.significance - b.significance;
-    });
 
-    for (var i = 0; i < MAX_LOC && i < enclosedTrends.length; i++) {
-        fetchTweetsByLoc(enclosedTrends[i].woeid, tweetGroup);
-    }
 };
+
 
 
 
@@ -325,17 +421,14 @@ var getWindowBounds = function() {
     var swLng = sw.lng();
     var neLng = ne.lng();
     var widthRatio = ($('#info-canvas').width() + 50.0) / $(window).width();
-    console.log(widthRatio);
     if (swLng < neLng) {
         var dlng = neLng - swLng;
     } else {
         var dlng = 360 - (swLng - neLng);
     }
 
-    console.log(dlng);
     dlng *= widthRatio;
     swLng += dlng;
-    console.log(dlng);
 
     if (swLng > 180) {
         swLng = -180 + (swLng - 180);

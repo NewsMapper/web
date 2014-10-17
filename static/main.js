@@ -169,7 +169,7 @@ $(document).ready(function() {
       $('#info-canvas').css('display', 'block');
     }
 
-    fetchTweets();
+    fetchItems();
 
   });
 
@@ -184,9 +184,12 @@ $(document).ready(function() {
 var app = angular.module('app', []);
 app.controller('controller', function($scope) {
 
+  $scope.tweets = [];
+
   trendGroup = CreateTrendGroup(map);
   tweetGroup = CreateTweetGroup($scope);
-  findTrendingLoc(trendGroup, tweetGroup);
+  findTrendingTweetLoc(trendGroup, tweetGroup);
+  findTrendingRedditLoc(trendGroup, tweetGroup);
   $scope.rects = [];
   $scope.hovered = null;
 
@@ -197,7 +200,7 @@ app.controller('controller', function($scope) {
     var trendingLocs = trendingLocIds.map(trendGroup.getLoc);
     $scope.rects = trendingLocs.map(mapRegion);
     $scope.hovered = tweet.id;
-  }
+  };
 
   $scope.clearRects = function() {
     $scope.rects.forEach(function(rect) {
@@ -205,18 +208,37 @@ app.controller('controller', function($scope) {
     });
     $scope.hovered = null;
     $scope.rects = [];
-  }
+  };
 
   $scope.clear = function() {
     $scope.tweets.forEach(function(t) {
         t.hidden = false;
     });
     $scope.clearRects();
-  }
+  };
 
   $scope.shouldShow = function(tweet) {
     return $scope.hovered == null || tweet.id == $scope.hovered;
-  }
+  };
+
+
+  $scope.renderItem = function(item) {
+    if (item.source === 'twitter') {
+      return item.text;
+    } else if (item.source === 'reddit') {
+      return item.title.text;
+    }
+  };
+
+  $scope.getLink = function(item) {
+    if (item.source === 'twitter') {
+      return '';
+    } else if (item.source === 'reddit') {
+      return 'href="'+item.title.link+'" target=_blank';
+    }
+  };
+
+
 });
 
 app.directive('ngVisible', function () {
