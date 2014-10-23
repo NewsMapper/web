@@ -39,8 +39,11 @@ header {
 
 .content-image {
     max-width: 100%;
-    height: auto;
+    left: 50%;
 }
+
+
+
 
 
 .info-content {
@@ -63,6 +66,7 @@ header {
     -ms-transform: translateZ(0);
     transform: translateZ(0);
     box-shadow: 0 0 1px rgba(0, 0, 0, 0);
+    text-align: center;
 }
 
 .info-content:hover {
