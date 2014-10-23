@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, make_response, url_for, jsonify
 import redis
 import simplejson as json
+import ast
 import uuid
 from datetime import datetime, timedelta
 from calendar import timegm
@@ -80,7 +81,7 @@ def search_twitter(endpoint):
 @app.route('/reddit_api/r')
 def search_available_subreddits():
     subreddits = r.lrange(REDDIT_SUBREDDITS, 0, -1)
-    response = jsonify({'subreddits': map(json.loads, subreddits)})
+    response = jsonify({'subreddits': map(ast.literal_eval, subreddits)})
     response.cache_control.max_age = 1800
     return response
 

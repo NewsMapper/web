@@ -257,13 +257,7 @@ var fetchFbEvents = function(accessToken, eventGroup) {
 
 
 var lookupWOEID = function(query, callback) {
-    if (typeof query === 'number') {
-        var q = 'select * from geo.places where woeid="'+query+'"';
-        var fromWOEID = true;
-    } else {
-        var q = 'select * from geo.places where text="'+query+'"';
-        var fromWOEID = false;
-    }
+    var q = 'select * from geo.places where woeid="'+query+'"';
 
     $.getJSON('https://query.yahooapis.com/v1/public/yql',{
         q: q,
@@ -273,11 +267,7 @@ var lookupWOEID = function(query, callback) {
             return;
         }
 
-        if (fromWOEID) {
-            var place = response.query.results.place;
-        } else {
-            var place = response.query.results.place[0];
-        }
+        var place = response.query.results.place;
 
         if (place === undefined) {
             return;
@@ -314,13 +304,13 @@ var findTrendingTweetLoc = function(trends, tweetGroup) {
 var findTrendingRedditLoc = function(trends, redditGroup) {
     $.getJSON(REDDIT_AVAILABLE_SUBREDDITS, {}, function(response) {
         response.subreddits.forEach(function(subreddit) {
-            lookupWOEID(subreddit.name, function(location) {
-                trends.push({
-                    woeid: location.woeid,
-                    location: location,
-                    rid: subreddit.rid,
-                }, fetchRedditByLoc);
-            });
+            var location = jQuery.extend(true, {}, subreddit.location);
+            delete subreddit.location;
+            trends.push({
+                woeid: location.woeid,
+                location: location,
+                rid: subreddit.rid,
+            }, fetchRedditByLoc);
         });
     });
 }
@@ -361,7 +351,7 @@ var mapRegion = function(trendingLoc) {
     var bound2 = trendingLoc.location.boundary.southWest;
     var center = trendingLoc.location.center;
     var legend;
-    if (map.getZoom() > 5) {
+    if (map.getZoom() > 5 || trendingLoc.area > 8) {
         legend = new google.maps.Rectangle({
             strokeColor: '#FF0000',
             strokeOpacity: 0,
