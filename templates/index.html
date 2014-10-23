@@ -43,9 +43,10 @@
         <div id="map-canvas"></div>
         <div id="info-canvas" ng-controller="controller">
             <table>
-                <tr ng-repeat="tweet in tweets" ng-mouseenter="showRegion(tweet)" ng-mouseleave="clear()" ng-visible="shouldShow(tweet)" >
+                <tr ng-repeat="tweet in tweets" ng-mouseenter="showRegion(tweet)" ng-mouseleave="clear()">
                     <td class="info-content {{tweet.source}}">
-                        {{ renderItem(tweet); }}
+                        <img class="content-image" src="{{ tweet.entities && tweet.entities.media ? tweet.entities.media[0].media_url : tweet.image }}"/>
+                        <div class="content-text">{{ tweet.source == 'reddit'? tweet.title.text : tweet.text; }}</div>
                     </td>
                 </tr>
             </table>

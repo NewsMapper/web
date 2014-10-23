@@ -209,42 +209,14 @@ app.controller('controller', function($scope) {
   };
 
   $scope.clear = function() {
-    $scope.tweets.forEach(function(t) {
-        t.hidden = false;
-    });
     $scope.clearRects();
   };
 
-  $scope.shouldShow = function(tweet) {
-    return $scope.hovered == null || tweet.id == $scope.hovered;
-  };
 
 
-  $scope.renderItem = function(item) {
-    if (item.source === 'twitter') {
-      return item.text;
-    } else if (item.source === 'reddit') {
-      return item.title.text;
-    }
-  };
-
-  $scope.getLink = function(item) {
-    if (item.source === 'twitter') {
-      return '';
-    } else if (item.source === 'reddit') {
-      return 'href="'+item.title.link+'" target=_blank';
-    }
-  };
 
 
 });
 
-app.directive('ngVisible', function () {
-    return function (scope, element, attr) {
-        scope.$watch(attr.ngVisible, function (visible) {
-            element.css('opacity', visible ? '1' : '0.25');
-        });
-    };
-})
 
 

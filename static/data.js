@@ -6,7 +6,7 @@ var REDDIT_AVAILABLE_SUBREDDITS = '/reddit_api/r';
 var REDDIT_SUBREDDIT = '/reddit_api/r/';
 var MAX_ZOOM = 16;
 var MIN_ZOOM = 3;
-var MAX_REQUEST = 15;
+var MAX_REQUESTS = 15;
 var SENT_REQUEST = 0;
 var tweetGroup;
 var trendGroup;
@@ -121,20 +121,17 @@ var CreateTweetGroup = function($scope) {
 
 
 var fetchTweetByTopic = function(topic, callback) {
-    SENT_REQUEST ++;
     topic = encodeURIComponent(topic);
     $.getJSON(TWITTER_SEARCH+'?q='+topic, {}, callback);
 };
 
 
 var fetchSubreddit = function(rid, callback) {
-    SENT_REQUEST ++;
     $.getJSON(REDDIT_SUBREDDIT+rid, {}, callback);
 }
 
 
 var fetchTrends = function(woeid, callback) {
-    SENT_REQUEST ++;
     $.getJSON(TWITTER_TRENDS+'?id='+woeid, {}, callback);
 };
 
@@ -350,12 +347,14 @@ var mapRegion = function(trendingLoc) {
     var bound1 = trendingLoc.location.boundary.northEast;
     var bound2 = trendingLoc.location.boundary.southWest;
     var center = trendingLoc.location.center;
-    var legend;
-    if (map.getZoom() > 5 || trendingLoc.area > 8) {
+    var legend; 
+
+
+    if (map.getZoom() > 5 || trendingLoc.location.area > 8) {
         legend = new google.maps.Rectangle({
             strokeColor: '#FF0000',
             strokeOpacity: 0,
-            strokeWeight: 2,
+            strokeWeight: 2,    
             fillColor: '#FF0000',
             fillOpacity: 0.4,
             map: map,
@@ -390,12 +389,15 @@ var fetchItems = function() {
 
         if (windowBounds.contains(trendLatLng)) {
             trend.fetchFuncs.forEach(function(fetchFunc) {
-                fetchFunc(trend, tweetGroup);
+                if (SENT_REQUEST++< MAX_REQUESTS) {
+                    fetchFunc(trend, tweetGroup);
+                }
             });
 
-            if (SENT_REQUEST > MAX_REQUEST) {
-                break;
-            }
+        }
+
+        if (SENT_REQUEST >= MAX_REQUESTS) {
+            break;
         }
     }
 

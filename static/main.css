@@ -37,7 +37,14 @@ header {
     user-select: none;
 }
 
+.content-image {
+    max-width: 100%;
+    height: auto;
+}
+
+
 .info-content {
+    word-wrap: break-word;
     color: #555;
     cursor: pointer;
     width: 100%;
