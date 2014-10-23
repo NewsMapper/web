@@ -22,6 +22,8 @@ $(document).ready(function() {
   var center;
   if ($(window).width() > 400) center = new google.maps.LatLng(40.105876,-88.228111);
   else center = new google.maps.LatLng(40.107667,-88.228224);
+
+
   var options = {
       panControl: false,
       zoomControl: true,
@@ -35,8 +37,8 @@ $(document).ready(function() {
       maxZoom: MAX_ZOOM,
       minZoom: MIN_ZOOM,
       center: center,
-      mapTypeId: google.maps.MapTypeId.HYBRID,
-      styles: [{"featureType":"road","elementType":"geometry","stylers":[{"visibility":"off"}]},{"featureType":"poi","elementType":"geometry","stylers":[{"visibility":"off"}]},{"featureType":"landscape","elementType":"geometry","stylers":[{"color":"#fffffa"}]},{"featureType":"water","stylers":[{"lightness":50}]},{"featureType":"road","elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"transit","stylers":[{"visibility":"off"}]},{"featureType":"administrative","elementType":"geometry","stylers":[{"lightness":40}]}]
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      styles: [{"stylers":[{"visibility":"on"},{"saturation":-100},{"gamma":0.54}]},{"featureType":"road","elementType":"labels.icon","stylers":[{"visibility":"off"}]},{"featureType":"water","stylers":[{"color":"#4d4946"}]},{"featureType":"poi","elementType":"labels.icon","stylers":[{"visibility":"off"}]},{"featureType":"poi","elementType":"labels.text","stylers":[{"visibility":"simplified"}]},{"featureType":"road","elementType":"geometry.fill","stylers":[{"color":"#ffffff"}]},{"featureType":"road.local","elementType":"labels.text","stylers":[{"visibility":"simplified"}]},{"featureType":"water","elementType":"labels.text.fill","stylers":[{"color":"#ffffff"}]},{"featureType":"transit.line","elementType":"geometry","stylers":[{"gamma":0.48}]},{"featureType":"transit.station","elementType":"labels.icon","stylers":[{"visibility":"off"}]},{"featureType":"road","elementType":"geometry.stroke","stylers":[{"gamma":7.18}]}]
   };
 
   map = new google.maps.Map(document.getElementById('map-canvas'), options);
@@ -111,10 +113,9 @@ $(document).ready(function() {
   }
 
   google.maps.event.addDomListener(window, 'load', initialize);
-  
   $('#field').click(function() {
-    $('#field').css('border', 'none');
-    $('#field').attr('placeholder', 'email@host.com');
+    $('#field').css('border', '1px solid #fff');
+    $('#field').attr('placeholder', 'email@serv.er');
   });
 
   $('body').click(function(e) {
@@ -127,19 +128,16 @@ $(document).ready(function() {
   var res = window.location.search;
   if (res == "?s") {
         $('#field').attr('placeholder', 'we got it; thank you!');
-        $('#field').css('background-color', '#003C7D');
-        $('#field').css('border', '1px solid #fff');
+        $('#field').css('border', '1px solid #333');
         $("#field").prop('disabled', true);
         $('#field').css('cursor', 'not-allowed');
   } else if (res == "?f") {
         $('#field').attr('placeholder', 'oops; please try again!');
-        $('#field').css('background-color', '#003C7D');
-        $('#field').css('border', '1px solid #F47F24');
+        $('#field').css('border', '1px solid #d43f3a');
   } else if (res == "?e") {
         $('#field').attr('placeholder', 'error; tell team@news.gdyer.de!');
-        $('#field').css('background-color', '#003C7D');
         $('#field').css('width', '200px');
-        $('#field').css('border', '1px solid #F47F24');
+        $('#field').css('border', '1px solid #d43f3a');
         $("#field").prop('disabled', true);
         $('#field').css('cursor', 'not-allowed');
   }
