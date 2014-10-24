@@ -11,10 +11,15 @@ var SENT_REQUEST = 0;
 var tweetGroup;
 var trendGroup;
 var curRedditId = 1;
+var MAX_ITEM = 200;
+var ITEM_COUNT = 0;
+
+
 
 Array.prototype.has = function(p) {
     return this.filter(p).length != 0;
 }
+
 
 
 var CreateEventGroup = function() {
@@ -85,11 +90,12 @@ var CreateTweetGroup = function($scope) {
             });
 
 
-            if (!tweetExisted) {
+            if (!tweetExisted && ITEM_COUNT < MAX_ITEM) {
                 $scope.$apply(function() {
                     tweet.side = randomSide();
                     $scope.tweets.push(tweet);
                 });
+                ITEM_COUNT ++;
             }
 
             if (__locMapping[tweet.id] === undefined) {
@@ -110,7 +116,7 @@ var CreateTweetGroup = function($scope) {
             $scope.$apply(function() {
                 $scope.tweets = [];
             });
-
+            ITEM_COUNT = 0; 
             __topics = [];
             __locMapping = {};
         }
@@ -377,8 +383,7 @@ var mapRegion = function(trendingLoc) {
 var fetchItems = function() {
     var trends = trendGroup.getTrends();
     var windowBounds = getWindowBounds();
-    SENT_REQUEST = 0;
-
+    
     for (var woeid in trends) {
         var trend = trendGroup.getLoc(woeid);
         var trendCenter = trend.location.center;
@@ -389,14 +394,14 @@ var fetchItems = function() {
 
         if (windowBounds.contains(trendLatLng)) {
             trend.fetchFuncs.forEach(function(fetchFunc) {
-                if (SENT_REQUEST++< MAX_REQUESTS) {
+                if (ITEM_COUNT < MAX_ITEM) {
                     fetchFunc(trend, tweetGroup);
                 }
             });
 
         }
 
-        if (SENT_REQUEST >= MAX_REQUESTS) {
+        if (ITEM_COUNT >= MAX_ITEM) {
             break;
         }
     }
