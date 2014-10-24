@@ -5,6 +5,7 @@ __pycache__/
 config.py
 *.rdb
 .DS_Store
+*~
 # C extensions
 *.so
 # Distribution / packaging
