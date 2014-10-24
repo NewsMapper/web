@@ -19,6 +19,7 @@ REDDIT_SUBREDDITS = 'REDDIT:SUBREDDITS'
 REDDIT_SUBREDDIT = 'REDDIT:SUBREDDIT'
 
 
+
 def get_subreddit_key(rid):
     return '%s:%s' % (REDDIT_SUBREDDIT, rid)
 

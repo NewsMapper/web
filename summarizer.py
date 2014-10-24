@@ -6,6 +6,7 @@ from lxml import etree
 
 
 OGP_RE = re.compile(r'og:(.*)')
+AGENT_HEADER = {'User-Agent': 'News Mapper'}
 
 
 
@@ -30,7 +31,7 @@ def summarize_page(raw_page, page_encoding):
 
 
 def summarize_by_url(url):
-    page = requests.get(url)
+    page = requests.get(url, headers=AGENT_HEADER)
     if page.status_code == 200:
         return summarize_page(page.text, page.encoding)
     else:
