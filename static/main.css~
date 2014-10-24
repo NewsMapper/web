@@ -125,16 +125,6 @@ form {display: inline;}
     height: 15px;
     width: 130px;
 }
-#lean_overlay {
-    position: fixed;
-    z-index:100;
-    top: 0px;
-    left: 0px;
-    height:100%;
-    width:100%;
-    background: #000;
-    display: none;
-}
 .item {color: #333;}
 @media only screen and (max-width: 740px) {
     #info-canvas {display: none;}

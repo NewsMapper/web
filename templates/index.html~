@@ -29,7 +29,7 @@
                     <span id="messages"></span>
                 </span>
                 <span id="right-header">
-                    <form action=" http://news.gdyer.de/v.php" method="get">
+                    <form action="http://news.gdyer.de/v.php" method="get">
                         <input id="field" placeholder="subscribe to updates" name="email" type="email" required />
                     </form>
 		    <iframe id="watch" src="http://ghbtns.com/github-btn.html?user=newsmapper&repo=web&type=watch" allowtransparency="true" frameborder="0" scrolling="0" width="62" height="20"></iframe>		  
@@ -42,7 +42,7 @@
                 <tr ng-repeat="tweet in tweets" ng-mouseenter="showRegion(tweet)" ng-mouseleave="clear()">
                     <td class="info-content {{tweet.source}}">
 			<span ng-if="(tweet.entities && tweet.entities.media ? tweet.entities.media[0].media_url : tweet.image).length > 0">
-				<img class="content-image" style="float: {{ getContentImgStyle() }}" src="{{ tweet.entities && tweet.entities.media ? tweet.entities.media[0].media_url : tweet.image }}"/>
+				<img class="content-image" src="{{ tweet.entities && tweet.entities.media ? tweet.entities.media[0].media_url : tweet.image }}"/>
 			</span>
                         <div class="content-text">{{ tweet.source == 'reddit'? tweet.title.text : tweet.text; }}</div>
                     </td>

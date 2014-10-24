@@ -14,6 +14,12 @@ $(window).resize(function() {
   setBounds();
 });
 
+function setImageStyle() {
+    var r = Math.floor(Math.random()*2);
+    var arr = ["left", "right"];
+    $(".content-image").css('margin-' + arr[r], '5px');
+    $(".content-image").css('float', arr[(r+1)%2]);
+}
 
 $(document).ready(function() {
   setBounds();

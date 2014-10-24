@@ -16,6 +16,13 @@ Array.prototype.has = function(p) {
     return this.filter(p).length != 0;
 }
 
+$scope.getContentImgStyle = function(){
+    var r = Math.floor(Math.random()*2);
+    var arr = ["left", "right"];
+    return arr[r];
+}
+
+
 
 var CreateEventGroup = function() {
     var __eventList = [];
