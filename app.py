@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from calendar import timegm
 from config import *
 from random import shuffle
+from summarizer import summarize_by_url
 
 app = Flask(__name__)
 r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
@@ -99,10 +100,17 @@ def get_subreddit(rid):
     return response
 
 
-
-
-
-
+@app.route('/summary')
+def summarize():
+    url = request.args['url']
+    try:
+        summary = summarize_by_url(url)
+    except Exception:
+        summary = {}
+    
+    response = jsonify(summary)
+    response.cache_control.max_age = 86400
+    return response
 
 
 
