@@ -147,6 +147,11 @@ $(document).ready(function() {
   });
 
 
+  google.maps.event.addListener(map, "zoom_changed", function() {
+    $('#info-canvas').css('display', 'none');
+  });
+
+
 
 
 
