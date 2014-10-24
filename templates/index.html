@@ -41,9 +41,9 @@
             <table>
                 <tr ng-repeat="tweet in tweets" ng-mouseenter="showRegion(tweet)" ng-mouseleave="clear()">
                     <td class="info-content {{tweet.source}}">
-			<span ng-if="(tweet.entities && tweet.entities.media ? tweet.entities.media[0].media_url : tweet.image).length > 0">
-				<img class="content-image" style="float: {{ getContentImgStyle() }}" src="{{ tweet.entities && tweet.entities.media ? tweet.entities.media[0].media_url : tweet.image }}"/>
-			</span>
+            			<span ng-if="(tweet.entities && tweet.entities.media ? tweet.entities.media[0].media_url : tweet.image).length > 0">
+            				<img class="content-image {{ tweet.side }}" style="float: {{ getContentImgStyle() }}" src="{{ tweet.entities && tweet.entities.media ? tweet.entities.media[0].media_url : tweet.image }}"/>
+            			</span>
                         <div class="content-text">{{ tweet.source == 'reddit'? tweet.title.text : tweet.text; }}</div>
                     </td>
                 </tr>

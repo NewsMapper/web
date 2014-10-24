@@ -87,6 +87,7 @@ var CreateTweetGroup = function($scope) {
 
             if (!tweetExisted) {
                 $scope.$apply(function() {
+                    tweet.side = randomSide();
                     $scope.tweets.push(tweet);
                 });
             }
@@ -432,6 +433,22 @@ var getWindowBounds = function() {
                             ne);
     return windowBounds;
 };
+
+
+var randomSide = function() {
+    if (Math.floor(Math.random() * 2) == 1) {
+        return "left";
+    } else {
+        return "right";
+    }
+};
+
+
+
+
+
+
+
 
 
 

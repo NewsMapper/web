@@ -19,7 +19,7 @@ header {
 }
 ::-webkit-scrollbar {display: none;}
 #info-canvas {
-    width: 25%;
+    width: 30%;
     display: none;
     height: 30em; /* will change on load */
     position: absolute;
@@ -32,7 +32,9 @@ header {
     -webkit-user-select: none;
     user-select: none;
 }
-.content-image {max-width: 100%;float:left;margin-right:5px;}
+.content-image {max-width: 100%;}
+.left {float:left;margin-right:5px;}
+.right {float:right;margin-left:5px;}
 .info-content {
     word-wrap: break-word;
     color: #555;
