@@ -160,6 +160,13 @@ $(document).ready(function() {
 
   google.maps.event.addListener(map, "idle", function() {
 
+    tweetGroup.clear();
+    clearTimeout(FETCH_EVENT);
+    FETCH_EVENT = setTimeout(function() {
+      fetchItems();
+    }, 200);
+
+
     if (first && $(window).width() > 740) {
         $('#info-canvas').toggle('slide', { direction: 'left' }, 100);
         first = false;
@@ -170,8 +177,6 @@ $(document).ready(function() {
     } else {
       $('#info-canvas').css('display', 'block');
     }
-
-    fetchItems();
 
   });
 

@@ -383,7 +383,8 @@ var mapRegion = function(trendingLoc) {
 var fetchItems = function() {
     var trends = trendGroup.getTrends();
     var windowBounds = getWindowBounds();
-    SENT_REQUEST = 0; 
+    SENT_REQUEST = 0;
+
     for (var woeid in trends) {
         var trend = trendGroup.getLoc(woeid);
         var trendCenter = trend.location.center;
