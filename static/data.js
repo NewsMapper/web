@@ -368,7 +368,6 @@ var mapRegion = function(trendingLoc) {
               new google.maps.LatLng(parseFloat(bound1.latitude), parseFloat(bound1.longitude)),
               new google.maps.LatLng(parseFloat(bound2.latitude), parseFloat(bound2.longitude)))
         }); 
-        legend.type = "rectanle";
     } else if (trendingLoc.woeid !== 1) {
         legend = new google.maps.Marker({
             position: new google.maps.LatLng(
@@ -377,7 +376,6 @@ var mapRegion = function(trendingLoc) {
             map: map,
             icon: '/static/img/dot.png'
         });
-        legend.type = "marker";
     }
     return legend;
 };

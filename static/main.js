@@ -228,20 +228,7 @@ app.controller('controller', function($scope) {
   };
 
   $scope.showSummary = function(item) {
-    if ($scope.infoWindow != null) {
-      $scope.infoWindow.close(); 
-      $scope.infoWindow = null;
-    }
-    var summary = "hello, world!";
-    var legend = $scope.rects[0];
-    $scope.infoWindow = new google.maps.InfoWindow();
-    if (legend.type === 'marker') {
-      $scope.infoWindow.setPosition(legend.getPosition());
-    } else {
-      $scope.infoWindow.setPosition(legend.getBounds().getCenter());
-    }
-    $scope.infoWindow.setContent(summary);
-    $scope.infoWindow.open(map);
+
   };
 
 
