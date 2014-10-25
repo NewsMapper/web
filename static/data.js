@@ -6,7 +6,7 @@ var REDDIT_AVAILABLE_SUBREDDITS = '/reddit_api/r';
 var REDDIT_SUBREDDIT = '/reddit_api/r/';
 var MAX_ZOOM = 16;
 var MIN_ZOOM = 3;
-var MAX_REQUESTS = 15;
+var MAX_REQUESTS = 20;
 var SENT_REQUEST = 0;
 var tweetGroup;
 var trendGroup;
@@ -383,7 +383,7 @@ var mapRegion = function(trendingLoc) {
 var fetchItems = function() {
     var trends = trendGroup.getTrends();
     var windowBounds = getWindowBounds();
-    
+    SENT_REQUEST = 0; 
     for (var woeid in trends) {
         var trend = trendGroup.getLoc(woeid);
         var trendCenter = trend.location.center;
@@ -394,14 +394,15 @@ var fetchItems = function() {
 
         if (windowBounds.contains(trendLatLng)) {
             trend.fetchFuncs.forEach(function(fetchFunc) {
-                if (ITEM_COUNT < MAX_ITEM) {
+                if (canSend()) {
+                    SENT_REQUEST ++;
                     fetchFunc(trend, tweetGroup);
                 }
             });
 
         }
 
-        if (ITEM_COUNT >= MAX_ITEM) {
+        if (!canSend()) {
             break;
         }
     }
@@ -449,7 +450,10 @@ var randomSide = function() {
 };
 
 
-
+var canSend = function() {
+    return (ITEM_COUNT < MAX_ITEM &&
+           SENT_REQUEST < MAX_REQUESTS);
+};
 
 
 

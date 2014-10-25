@@ -144,11 +144,13 @@ $(document).ready(function() {
 
   google.maps.event.addListener(map, "dragstart", function() {
     $('#info-canvas').css('display', 'none');
+    tweetGroup.clear();
   });
 
 
   google.maps.event.addListener(map, "zoom_changed", function() {
     $('#info-canvas').css('display', 'none');
+    tweetGroup.clear();
   });
 
 
@@ -158,7 +160,6 @@ $(document).ready(function() {
   var first = true;
 
   google.maps.event.addListener(map, "idle", function() {
-    tweetGroup.clear();
 
     if (first && $(window).width() > 740) {
         $('#info-canvas').toggle('slide', { direction: 'left' }, 100);
