@@ -145,11 +145,13 @@ $(document).ready(function() {
 
   google.maps.event.addListener(map, "dragstart", function() {
     $('#info-canvas').css('display', 'none');
+    clearTimeout(FETCH_EVENT);
   });
 
 
   google.maps.event.addListener(map, "zoom_changed", function() {
     $('#info-canvas').css('display', 'none');
+    clearTimeout(FETCH_EVENT);
   });
 
 
@@ -161,7 +163,6 @@ $(document).ready(function() {
   google.maps.event.addListener(map, "idle", function() {
 
     tweetGroup.clear();
-    clearTimeout(FETCH_EVENT);
     FETCH_EVENT = setTimeout(function() {
       fetchItems();
     }, 200);
