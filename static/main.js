@@ -1,4 +1,5 @@
 var map;
+var FETCH_EVENT;
 
 
 function setBounds() {
@@ -144,13 +145,11 @@ $(document).ready(function() {
 
   google.maps.event.addListener(map, "dragstart", function() {
     $('#info-canvas').css('display', 'none');
-    tweetGroup.clear();
   });
 
 
   google.maps.event.addListener(map, "zoom_changed", function() {
     $('#info-canvas').css('display', 'none');
-    tweetGroup.clear();
   });
 
 
