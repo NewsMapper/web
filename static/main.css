@@ -10,14 +10,34 @@ header {
     cursor: default;
     width: 100%;
     color: #333;
-    font-family: 'Lato', sans-serif;
     font-size: 24px;
+    font-family: 'Lato', sans-serif;
     line-height: 48px;
     height: 48px;
     background: #fff;
     text-align: left;
 }
 ::-webkit-scrollbar {display: none;}
+#summary {
+    width: 25%;
+    height: 55%;
+    position: absolute;
+    overflow: auto;
+    z-index: 3;
+    top: 40%;
+    left: 75%;
+    color: #333;
+    //padding: 5px;
+    font-family: 'Lato', sans-serif;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    background-color: white;
+    opacity: 0.9;
+    border-radius: 2px;
+    display: none;
+}
 #info-canvas {
     width: 30%;
     display: none;

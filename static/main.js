@@ -209,6 +209,8 @@ app.controller('controller', function($scope) {
     var trendingLocs = trendingLocIds.map(trendGroup.getLoc);
     $scope.rects = trendingLocs.map(mapRegion);
     $scope.hovered = tweet.id;
+    clearTimeout($scope.summaryEvent);
+    $scope.summaryEvent = summarize(tweet);
   };
 
   $scope.clearRects = function() {
@@ -221,18 +223,33 @@ app.controller('controller', function($scope) {
 
   $scope.clear = function() {
     $scope.clearRects();
+    clearTimeout($scope.summaryEvent);
+    clearSummary(); 
     if ($scope.infoWindow !== null) {
       $scope.infoWindow.close(); 
       $scope.infoWindow = null;
     }   
   };
 
-  $scope.showSummary = function(item) {
-
-  };
-
-
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -39,7 +39,7 @@
         <div id="map-canvas"></div>
         <div id="info-canvas" ng-controller="controller">
             <table>
-                <tr ng-repeat="tweet in tweets" ng-mouseenter="showRegion(tweet)" ng-mouseleave="clear()" ng-click="showSummary(tweet)">
+                <tr ng-repeat="tweet in tweets" ng-mouseenter="showRegion(tweet)" ng-mouseleave="clear()">
                     <td class="info-content {{tweet.source}}">
             			<span ng-if="(tweet.entities && tweet.entities.media ? tweet.entities.media[0].media_url : tweet.image).length > 0">
             				<img class="content-image {{ tweet.side }}" style="float: {{ getContentImgStyle() }}" src="{{ tweet.entities && tweet.entities.media ? tweet.entities.media[0].media_url : tweet.image }}"/>
@@ -49,6 +49,7 @@
                 </tr>
             </table>
         </div>
+        <div id="summary">hello</div>
     </body>
 </html>
 {% endraw %}

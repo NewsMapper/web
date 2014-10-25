@@ -4,6 +4,7 @@ var TWITTER_SEARCH = '/twitter_api/search';
 var TWITTER_TRENDS = '/twitter_api/trends';
 var REDDIT_AVAILABLE_SUBREDDITS = '/reddit_api/r';
 var REDDIT_SUBREDDIT = '/reddit_api/r/';
+var SUMMARY_URL = '/summary';
 var MAX_ZOOM = 16;
 var MIN_ZOOM = 3;
 var MAX_REQUESTS = 20;
@@ -13,7 +14,7 @@ var trendGroup;
 var curRedditId = 1;
 var MAX_ITEM = 200;
 var ITEM_COUNT = 0;
-
+var SUMMARY_HTTP = {abort:function(){}};
 
 
 Array.prototype.has = function(p) {
@@ -455,6 +456,64 @@ var canSend = function() {
     return (ITEM_COUNT < MAX_ITEM &&
            SENT_REQUEST < MAX_REQUESTS);
 };
+
+
+
+
+var summarize = function(item) {
+    return setTimeout(function() {
+        showSummary(item);
+    }, 300);
+};
+
+
+var showSummary = function(item) {
+    if (item.source !== 'reddit') {
+        return;
+    }
+    var summaryHTML = '<div style="padding: 5px;"><div id="summary-title"></div><div><img id="summary-image" class="content-image"/></div><div id="summary-description"></div></div>';
+    $('#summary').html(summaryHTML);
+    SUMMARY_HTTP = $.getJSON(SUMMARY_URL, {'url': item.title.link}, function(summary) {
+        if (Object.keys(summary).length === 0) {
+            return;
+        }
+        $('#summary-title').html(summary.title);
+        $('#summary-image').attr('src', summary.image);
+        $('#summary-description').html(summary.description);
+        $('#summary').fadeIn('fast');
+    });
+};
+
+
+
+var clearSummary = function() {
+    $('#summary').fadeOut('fast');
+    $('#summary').html('');    
+    SUMMARY_HTTP.abort();
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
