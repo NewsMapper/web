@@ -350,8 +350,8 @@ window.fbAsyncInit = function() {
 
 
 var mapRegion = function(trendingLoc) {
-    var bound1 = trendingLoc.location.boundary.northEast;
-    var bound2 = trendingLoc.location.boundary.southWest;
+    var bound1 = trendingLoc.location.boundary.southWest;
+    var bound2 = trendingLoc.location.boundary.northEast;
     var center = trendingLoc.location.center;
     var legend; 
 
@@ -365,9 +365,10 @@ var mapRegion = function(trendingLoc) {
             fillOpacity: 0.4,
             map: map,
             bounds: new google.maps.LatLngBounds(
-              new google.maps.LatLng(bound1.latitude, bound2.longitude),
-              new google.maps.LatLng(bound2.latitude, bound1.longitude))
+              new google.maps.LatLng(parseFloat(bound1.latitude), parseFloat(bound1.longitude)),
+              new google.maps.LatLng(parseFloat(bound2.latitude), parseFloat(bound2.longitude)))
         }); 
+        legend.type = "rectanle";
     } else if (trendingLoc.woeid !== 1) {
         legend = new google.maps.Marker({
             position: new google.maps.LatLng(
@@ -376,6 +377,7 @@ var mapRegion = function(trendingLoc) {
             map: map,
             icon: '/static/img/dot.png'
         });
+        legend.type = "marker";
     }
     return legend;
 };
