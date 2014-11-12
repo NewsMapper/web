@@ -1,6 +1,7 @@
 html, body, h1, header, input, span, form {margin: 0;  padding: 0; border: 0;  font-size: 100%;font: inherit;  vertical-align: baseline;}
 header {display: block;}
 body {line-height: 1;}
+textarea, input { outline: none; }
 header {
     -moz-user-select: none;
     -khtml-user-select: none;
