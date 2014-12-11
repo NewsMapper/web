@@ -1,15 +1,11 @@
 var map;
 var FETCH_EVENT;
 
-
 function setBounds() {
   var mh = $(window).height() - 48;
   $('#map-canvas').css('height', mh + 'px'); // 48px is the height of the header
   $('#info-canvas').css('height', (mh - 48) + 'px');
 }
-
-
-
 
 $(window).resize(function() {
   setBounds();
@@ -18,12 +14,7 @@ $(window).resize(function() {
 
 $(document).ready(function() {
   setBounds();
-
-  var center;
-  if ($(window).width() > 400) center = new google.maps.LatLng(40.105876,-88.228111);
-  else center = new google.maps.LatLng(40.107667,-88.228224);
-
-
+  var center = getCenter();
   var options = {
       panControl: false,
       zoomControl: true,
@@ -42,80 +33,19 @@ $(document).ready(function() {
   };
 
   map = new google.maps.Map(document.getElementById('map-canvas'), options);
-  function createMarker(point) {
-      var latlng = new google.maps.LatLng(point["lat"],point["lon"]);
-      var content;
-      if ($(window).width() > 600) content = '<div class="scrollFix">' + point["title"] + '</div>';
-      else content = point["title"];
-      var infowindow = new google.maps.InfoWindow({
-        content: content
-      });
-
-      var marker = new google.maps.Marker({
-          position: latlng,
-          map: map
-      });
-
-      google.maps.event.addListener(marker, 'click', function() {
-              infowindow.open(map, this);
-        });
-
-      // if ($(window).width() > 500) {
-      //   google.maps.event.addListener(marker, 'mouseout', function() {
-      //         infowindow.close();
-      //   });
-      // }
-
+  
+  function getCenter(pos) {
+      return (navigator.gelocation) ? new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude) : new google.maps.LatLng(40.107667,-88.22822);
   }
 
-  function initialize() {
-    var stDate;
-    var now;
-    var assoc = new Array(7);
-    assoc[0] = "Sunday";
-    assoc[1] = "Monday";
-    assoc[2] = "Tuesday";
-    assoc[3] = "Wednesday";
-    assoc[4] = "Thursday";
-    assoc[5] = "Friday";
-    assoc[6] = "Saturday";
-    now = new Date();
-    stDate = now.getDay();
-    DayOfWeek = (assoc[stDate]);
-
-    var points = [
-      {
-        "lat" : 40.114066,
-        "lon" : -88.224699,
-        "title" : "But if you tell us your email address above, we'll keep you posted."
-      },{
-        "lat" : 40.112409,
-        "lon" : -88.226836,
-        "title" : "We're not ready for public consumption yet."
-      },{
-        "lat" : 40.109307,
-        "lon" : -88.228347,
-        "title" : "Hello, welcome to NewsMapper."
-      },{
-        "lat" : 40.110858,
-        "lon" : -88.226976,
-        "title" : "We're part of CS 196 at UIUC (if you couldn't recognize the area)"
-      },{
-        "lat" : 40.115699,
-        "lon" : -88.227291,
-        "title" : "In the meantime, enjoy the rest of your " + DayOfWeek + "!"
-      }
-    ];
-
-    for (i=0;i<points.length;i++) {
-      createMarker(points[i]);
-    }
+  function geolocate() {
+      if (navigator.gelocation) navigator.geolocation.getCurrentPosition(getCenter);
   }
 
-  google.maps.event.addDomListener(window, 'load', initialize);
+  google.maps.event.addDomListener(window, 'load', geolocate);
   $('#field').click(function() {
     $('#field').css('border', '1px solid #fff');
-    $('#field').attr('placeholder', 'email@serv.er');
+    $('#field').attr('placeholder', 'chancellor@illinois.edu');
   });
 
   $('body').click(function(e) {
@@ -191,9 +121,11 @@ $(document).ready(function() {
 
 var app = angular.module('app', []);
 app.controller('controller', function($scope) {
-
+  $scope.saying = "democratizing headlines";
+  $scope.welcomes = [[], "Hello! Hola! 您好! こんにちは！ Sawubona! And welcome to NewsMapper", "We're glad you made the trip here, wherever you are", "Drag or pan the map to anywhere in the world", "See trending news content from any location", "Hover over an article to summarize it", "Subscribe to email updates on the right", "Star, watch, or fork us on Github: /newsmapper", "Until next time, enjoy your stay"];
+  $scope.desc = "Weclome to NewsMapper. We're creating news visualization tools at UIUC. Content by the people, for the people.";
   $scope.tweets = [];
-
+  
   trendGroup = CreateTrendGroup(map);
   tweetGroup = CreateTweetGroup($scope);
   findTrendingTweetLoc(trendGroup, tweetGroup);
@@ -201,7 +133,16 @@ app.controller('controller', function($scope) {
   $scope.rects = [];
   $scope.hovered = null;
   $scope.infoWindow = null;
-
+  $scope.slide = function slide(res) {
+      $scope.$apply(function() {
+	  $scope.message = $scope.welcomes[res];
+      });
+      console.log(res);
+      $('#message').fadeIn('slow').animate({opacity: 1.0}, 3000).fadeOut('slow', function() {
+	  if (res<$scope.welcomes.length)
+	      return slide(++res)
+      }); 
+  }  
 
 
   $scope.showRegion = function(tweet) {
@@ -232,24 +173,3 @@ app.controller('controller', function($scope) {
   };
 
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
